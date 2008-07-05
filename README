@@ -1,0 +1,6 @@
+git clone git://github.com/taf2/valgrind-ruby-1.8-patch.git
+wget ftp://ftp.ruby-lang.org/pub/ruby/1.8/ruby-1.8.7-p22.tar.bz2
+tar -jxf ruby-1.8.7-p22.tar.bz2
+cd ruby-1.8.7-p22
+patch -p0 < ../valgrind-ruby-1.8-patch/valgrind.patch
+
