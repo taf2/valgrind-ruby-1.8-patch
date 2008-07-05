@@ -1,0 +1,47 @@
+Index: configure.in
+===================================================================
+--- configure.in	(revision 17858)
++++ configure.in	(working copy)
+@@ -377,6 +377,10 @@
+ 	: handled by ext/thread/extconf.rb
+         ])
+ 
++AC_ARG_WITH(valgrind,
++        [  --with-valgrind         enable valgrind memcheck support.],
++        [AC_CHECK_HEADERS(valgrind/memcheck.h)])
++
+ dnl Checks for libraries.
+ case "$target_os" in
+ nextstep*)	;;
+Index: gc.c
+===================================================================
+--- gc.c	(revision 17858)
++++ gc.c	(working copy)
+@@ -37,6 +37,19 @@
+ void re_free_registers _((struct re_registers*));
+ void rb_io_fptr_finalize _((struct rb_io_t*));
+ 
++#ifdef HAVE_VALGRIND_MEMCHECK_H
++# include <valgrind/memcheck.h>
++# ifndef VALGRIND_MAKE_MEM_DEFINED
++#  define VALGRIND_MAKE_MEM_DEFINED(p, n) VALGRIND_MAKE_READABLE(p, n)
++# endif
++# ifndef VALGRIND_MAKE_MEM_UNDEFINED
++#  define VALGRIND_MAKE_MEM_UNDEFINED(p, n) VALGRIND_MAKE_WRITABLE(p, n)
++# endif
++#else
++# define VALGRIND_MAKE_MEM_DEFINED(p, n) /* empty */
++# define VALGRIND_MAKE_MEM_UNDEFINED(p, n) /* empty */
++#endif
++
+ #define rb_setjmp(env) RUBY_SETJMP(env)
+ #define rb_jmp_buf rb_jmpbuf_t
+ #ifdef __CYGWIN__
+@@ -668,6 +681,7 @@
+     VALUE v;
+     while (n--) {
+         v = *x;
++        VALGRIND_MAKE_MEM_DEFINED(&v, sizeof(v));
+ 	if (is_pointer_to_heap((void *)v)) {
+ 	    gc_mark(v, 0);
+ 	}
